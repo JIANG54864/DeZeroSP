@@ -4,7 +4,7 @@ import weakref
 import numpy as np
 import contextlib
 import dezerosp
-
+import heapq
 
 # =============================================================================
 # Config
@@ -96,7 +96,7 @@ class Variable:
     #   create_graph (bool): 如果为True，则在反向传播过程中创建计算图，用于高阶导数计算。
     # 返回值:
     #   无返回值。该函数通过修改Variable对象的grad属性来存储梯度。
-    def backward(self, retain_grad=False, create_graph=False):
+    def backward_sample(self, retain_grad=False, create_graph=False):
         # 如果当前变量的梯度尚未初始化，则根据数据形状创建一个全1的梯度张量。
         if self.grad is None:
             xp = dezerosp.cuda.get_array_module(self.data)
@@ -141,6 +141,46 @@ class Variable:
             if not retain_grad:
                 for y in f.outputs:
                     y().grad = None  # y是弱引用
+
+
+
+    def backward(self, retain_grad=False, create_graph=False):
+        if self.grad is None:
+            xp = dezerosp.cuda.get_array_module(self.data)
+            self.grad = Variable(xp.ones_like(self.data))
+
+        # 使用优先队列存储待处理函数，按generation排序
+        funcs = []
+        seen_set = set()
+
+        def add_func(f):
+            if f not in seen_set:
+                # 将函数及其generation作为元组加入优先队列
+                heapq.heappush(funcs, (-f.generation, f))  # 负号确保按最大值优先
+                seen_set.add(f)
+
+        add_func(self.creator)
+        while funcs:
+            _, f = heapq.heappop(funcs)  # 取出generation最大的函数
+            gys = [output().grad for output in f.outputs]  # 获取输出变量的梯度
+
+            with using_config('enable_backprop', create_graph):
+                gxs = f.backward(*gys)
+                if not isinstance(gxs, tuple):
+                    gxs = (gxs,)
+
+                for x, gx in zip(f.inputs, gxs):
+                    if x.grad is None:
+                        x.grad = gx
+                    else:
+                        x.grad = x.grad + gx
+
+                    if x.creator is not None:
+                        add_func(x.creator)
+
+            if not retain_grad:
+                for y in f.outputs:
+                    y().grad = None
 
 
     def unchain_backward(self):
