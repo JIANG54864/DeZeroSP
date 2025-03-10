@@ -257,6 +257,10 @@ class Function:
 
         return outputs if len(outputs) > 1 else outputs[0]
 
+    def __lt__(self, other):
+        # 补充辈分比较逻辑，以使得可以使用优先队列
+        return self.generation < other.generation
+
     def forward(self, xs):
         raise NotImplementedError()
 
@@ -279,6 +283,7 @@ class Add(Function):
             gx0 = dezerosp.functions.sum_to(gx0, self.x0_shape)
             gx1 = dezerosp.functions.sum_to(gx1, self.x1_shape)
         return gx0, gx1
+
 
 
 def add(x0, x1):
