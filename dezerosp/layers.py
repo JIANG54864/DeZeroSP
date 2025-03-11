@@ -300,9 +300,7 @@ class EmbedID(Layer):
 class BatchNorm(Layer):
     def __init__(self):
         super().__init__()
-        # `.avg_mean` and `.avg_var` are `Parameter` objects, so they will be
-        # saved to a file (using `save_weights()`).
-        # But they don't need grads, so they're just used as `ndarray`.
+        # `.avg_mean` 和 `.avg_var` 是 `Parameter` 对象，因此它们会被保存到文件中（通过 `save_weights()` 方法）。但它们不需要梯度，所以它们只是被用作 `ndarray`。
         self.avg_mean = Parameter(None, name='avg_mean')
         self.avg_var = Parameter(None, name='avg_var')
         self.gamma = Parameter(None, name='gamma')

@@ -90,12 +90,6 @@ class Variable:
     def cleargrad(self):
         self.grad = None
 
-    # backward函数实现了反向传播算法，用于计算梯度。
-    # 参数:
-    #   retain_grad (bool): 如果为True，则保留中间变量的梯度；否则在计算完成后清空梯度。
-    #   create_graph (bool): 如果为True，则在反向传播过程中创建计算图，用于高阶导数计算。
-    # 返回值:
-    #   无返回值。该函数通过修改Variable对象的grad属性来存储梯度。
     def backward_sample(self, retain_grad=False, create_graph=False):
         # 如果当前变量的梯度尚未初始化，则根据数据形状创建一个全1的梯度张量。
         if self.grad is None:
@@ -145,6 +139,12 @@ class Variable:
 
 
     def backward(self, retain_grad=False, create_graph=False):
+        """backward函数实现了反向传播算法，用于计算梯度。
+        参数:
+          retain_grad (bool): 如果为True，则保留中间变量的梯度；否则在计算完成后清空梯度。
+          create_graph (bool): 如果为True，则在反向传播过程中创建计算图，用于高阶导数计算。
+        返回值:
+          无返回值。该函数通过修改Variable对象的grad属性来存储梯度。"""
         if self.grad is None:
             xp = dezerosp.cuda.get_array_module(self.data)
             self.grad = Variable(xp.ones_like(self.data))
@@ -165,6 +165,7 @@ class Variable:
             gys = [output().grad for output in f.outputs]  # 获取输出变量的梯度
 
             with using_config('enable_backprop', create_graph):
+                # enable_backprop为False时，Function类的__call__方法不会记录计算图（即不会设置creator和inputs属性）
                 gxs = f.backward(*gys)
                 if not isinstance(gxs, tuple):
                     gxs = (gxs,)
@@ -243,6 +244,7 @@ class Function:
         inputs = [as_variable(x) for x in inputs]
 
         xs = [x.data for x in inputs]
+        # 调用forward方法传入的参数是data属性（numpy/cupy 数组），因此可以调用很多numpy/cupy的函数
         ys = self.forward(*xs)
         if not isinstance(ys, tuple):
             ys = (ys,)
@@ -258,7 +260,7 @@ class Function:
         return outputs if len(outputs) > 1 else outputs[0]
 
     def __lt__(self, other):
-        # 补充辈分比较逻辑，以使得可以使用优先队列
+        # 补充辈分比较逻辑，使得可以使用优先队列
         return self.generation < other.generation
 
     def forward(self, xs):
