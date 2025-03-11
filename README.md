@@ -1,7 +1,8 @@
 # DeZeroSP
 从零开始构建一个深度学习框架
 
-各模块介绍：
+dezerosp中各模块介绍：
+
 core：核心代码，
 1.定义变量（以及子类参数类）和函数的基类；
 2.重载常见运算符；
@@ -28,3 +29,5 @@ functions_conv：卷积相关函数
 cuda：使用gpu
 
 使用的外部库：numpy, matplotlib,  cupy, Pillow
+
+example文件夹中提供了一些使用此框架的示例
