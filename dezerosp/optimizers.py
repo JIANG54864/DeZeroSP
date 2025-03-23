@@ -102,9 +102,9 @@ class MomentumSGD(Optimizer):
             self.vs[v_key] = xp.zeros_like(param.data)
 
         v = self.vs[v_key]
-        # 在物体不受任何力时，物体逐渐减速，对应物理上的地面摩擦或空气阻力。
+        # 在物体不受任何力时，物体逐渐减速，对应物理上的地面摩擦或空气阻力。例如momentum=0.9
         v *= self.momentum
-        # 物体在梯度方向上受力，在这个力的作用下，物体的速度增加。
+        # 物体在梯度方向上受力，在这个力的作用下，物体的速度增加。（负梯度方向上加速
         v -= self.lr * param.grad.data
         param.data += v
 
@@ -171,8 +171,10 @@ class Adam(Optimizer):
         grad = param.grad.data
 
         # 更新一阶矩估计（momentum的估计值）
-        m += (1 - beta1) * (grad - m)
+        # m += (1 - beta1) * (grad - m)
+        m = beta1 * m + (1 - beta1) * grad
         # 更新二阶矩估计（梯度的平方的期望值）
-        v += (1 - beta2) * (grad * grad - v)
+        # v += (1 - beta2) * (grad * grad - v)
+        v = beta2 * v + (1 - beta2) * (grad * grad)
         # 类似adagrad的思想，更新参数
         param.data -= self.lr * m / (xp.sqrt(v) + eps)
