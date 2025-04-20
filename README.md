@@ -31,3 +31,5 @@ cuda：使用gpu
 使用的外部库：numpy, matplotlib,  cupy, Pillow
 
 example文件夹中提供了一些使用此框架的示例
+
+改进方向：numpy所做的运算也可以手动实现，实现真正的从“0”开始；继续实现transformer等内容；
