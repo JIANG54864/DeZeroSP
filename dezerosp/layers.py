@@ -258,8 +258,8 @@ class LSTM(Layer):
         self.reset_state()
 
     def reset_state(self):
-        self.h = None
-        self.c = None
+        self.h = None # 隐藏状态（经过衰减的细胞状态
+        self.c = None # 细胞状态/记忆单元
 
     def forward(self, x):
         if self.h is None:
@@ -268,17 +268,17 @@ class LSTM(Layer):
             o = F.sigmoid(self.x2o(x))
             u = F.tanh(self.x2u(x))
         else:
-            f = F.sigmoid(self.x2f(x) + self.h2f(self.h))
-            i = F.sigmoid(self.x2i(x) + self.h2i(self.h))
-            o = F.sigmoid(self.x2o(x) + self.h2o(self.h))
-            u = F.tanh(self.x2u(x) + self.h2u(self.h))
+            f = F.sigmoid(self.x2f(x) + self.h2f(self.h)) # 遗忘门
+            i = F.sigmoid(self.x2i(x) + self.h2i(self.h)) # 输入门
+            o = F.sigmoid(self.x2o(x) + self.h2o(self.h)) # 输出门
+            u = F.tanh(self.x2u(x) + self.h2u(self.h)) # 向记忆单元添加新信息
 
         if self.c is None:
             c_new = (i * u)
         else:
-            c_new = (f * self.c) + (i * u)
+            c_new = (f * self.c) + (i * u) # 细胞状态遗忘部分信息，并添加输入门处理后的新信息
 
-        h_new = o * F.tanh(c_new)
+        h_new = o * F.tanh(c_new) # 隐藏状态由输出门和tanh函数作用后的细胞状态进行组合
 
         self.h, self.c = h_new, c_new
         return h_new
