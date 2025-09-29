@@ -1,7 +1,7 @@
 # DeZeroSP
-从零开始构建一个深度学习框架
+ 此项目是我学习《深度学习入门：自制框架》一书的过程中所写的，增加了详细了中文注释，用优先级队列优化了反向传播顺序，增加了批量处理矩阵乘法，添加了Where函数和where接口，用于处理注意力掩码，并实现了transformer。 
 
-dezerosp中各模块介绍：
+## dezerosp中各模块介绍：
 
 core：核心代码，
 1.定义变量（以及子类参数类）和函数的基类；
@@ -28,8 +28,12 @@ functions_conv：卷积相关函数
 
 cuda：使用gpu
 
+transformer：实现transformer的内容
+
 使用的外部库：numpy, matplotlib,  cupy, Pillow
 
 example文件夹中提供了一些使用此框架的示例
 
-改进方向：numpy所做的运算也可以手动实现，实现真正的从“0”开始；继续实现transformer等内容；
+## 改进方向
+
+numpy所做的运算也可以手动实现，实现真正的从“0”开始。transformer基本内容已经实现，可以进一步复现LLM相关内容。

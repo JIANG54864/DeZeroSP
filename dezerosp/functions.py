@@ -257,7 +257,13 @@ mean = average
 
 class MatMul(Function):
     def forward(self, x, W):
-        y = x.dot(W)
+        # 处理批量矩阵乘法
+        if x.ndim == 4 and W.ndim == 4:
+            # 对于形状为 (batch, head, seq, d) 的张量
+            xp = dezerosp.cuda.get_array_module(x)
+            y = xp.matmul(x, W)
+        else:
+            y = x.dot(W)
         return y
 
     def backward(self, gy):
@@ -673,6 +679,27 @@ class Clip(Function):
 
 def clip(x, x_min, x_max):
     return Clip(x_min, x_max)(x)
+
+
+# =============================================================================
+# where
+# =============================================================================
+class Where(Function):
+    def forward(self, condition, x, y):
+        xp = cuda.get_array_module(condition)
+        result = xp.where(condition, x, y)
+        return result
+
+    def backward(self, gy):
+        condition, x, y = self.inputs
+        gx = gy * condition
+        gy_new = gy * (1 - condition)
+        return None, gx, gy_new
+
+
+def where(condition, x, y):
+    return Where()(condition, x, y)
+
 
 # =============================================================================
 # conv2d / col2im / im2col / basic_math

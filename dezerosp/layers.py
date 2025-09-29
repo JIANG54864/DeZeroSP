@@ -22,10 +22,13 @@ class Layer:
 
     def __call__(self, *inputs):
         outputs = self.forward(*inputs)
+        if outputs is None:
+            raise ValueError('Layer forward method returned None')
         if not isinstance(outputs, tuple):
             outputs = (outputs,)
-        self.inputs = [weakref.ref(x) for x in inputs]
-        self.outputs = [weakref.ref(y) for y in outputs]
+        # 只有在inputs和outputs不为None时才创建弱引用
+        self.inputs = [weakref.ref(x) for x in inputs if x is not None]
+        self.outputs = [weakref.ref(y) for y in outputs if y is not None]
         return outputs if len(outputs) > 1 else outputs[0]
 
     def forward(self, inputs):
@@ -323,3 +326,28 @@ class BatchNorm(Layer):
             self._init_params(x)
         return F.batch_nrom(x, self.gamma, self.beta, self.avg_mean.data,
                             self.avg_var.data)
+
+
+class LayerNorm(Layer):
+    def __init__(self, normalized_shape, eps=1e-5):
+        super().__init__()
+        if np.isscalar(normalized_shape):
+            normalized_shape = (normalized_shape,)
+        self.normalized_shape = tuple(normalized_shape)
+        self.eps = eps
+        
+        shape = (1,) + self.normalized_shape
+        self.gamma = Parameter(np.ones(shape))
+        self.beta = Parameter(np.zeros(shape))
+
+    def forward(self, x):
+        # 计算均值和方差
+        mean = F.mean(x, axis=-len(self.normalized_shape), keepdims=True)
+        var = F.mean((x - mean) ** 2, axis=-len(self.normalized_shape), keepdims=True)
+        
+        # 归一化
+        x_norm = (x - mean) / (var + self.eps) ** 0.5
+        
+        # 缩放和平移
+        y = self.gamma * x_norm + self.beta
+        return y
